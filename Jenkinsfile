@@ -14,13 +14,13 @@ pipeline {
         sh '''
           echo "PWD=$PWD"
           docker run --rm -u 0:0 \
-            -v "$PWD":/ws \
-            -v "$HOME/.m2":/root/.m2 \
-            -w /ws \
+            -v jenkins_home:/jenkins \
+            -w /jenkins/workspace/spring-petclinic-docker \
             maven:3.9.6-eclipse-temurin-17 \
-            mvn -U clean package -DskipTests -Dcheckstyle.skip=true -B
+            mvn -U clean package -DskipTests -Dcheckstyle.skip=true -B -Dmaven.repo.local=/jenkins/.m2/repository
+
+          ls -la target || true
         '''
-        sh 'ls -la target || true'
       }
     }
 
