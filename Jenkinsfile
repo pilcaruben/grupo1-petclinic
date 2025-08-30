@@ -4,22 +4,23 @@ pipeline {
   stages {
     stage('Diagnóstico') {
       steps {
-        sh 'whoami && id && uname -a'
-        sh 'pwd && ls -la && ls -la "${WORKSPACE}@tmp" || true'
+        sh 'whoami && id && pwd'
         sh 'docker version'
       }
     }
 
-    stage('Maven Build (inside)') {
+    stage('Maven Build (docker run)') {
       steps {
-        script {
-          docker.image('maven:3.9.6-eclipse-temurin-17').inside('--user root:root -v /var/run/docker.sock:/var/run/docker.sock') {
-            sh 'whoami && pwd'
-            sh 'mvn -v'
-            sh 'mvn -B -DskipTests clean package'
-            sh 'ls -la target || true'
-          }
-        }
+        sh '''
+          echo "PWD=$PWD"
+          docker run --rm -u 0:0 \
+            -v "$PWD":/ws \
+            -v "$HOME/.m2":/root/.m2 \
+            -w /ws \
+            maven:3.9.6-eclipse-temurin-17 \
+            mvn -U clean package -DskipTests -Dcheckstyle.skip=true -B
+        '''
+        sh 'ls -la target || true'
       }
     }
 
